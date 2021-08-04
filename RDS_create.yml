@@ -158,12 +158,12 @@ Resources:
   RDSSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
-      VpcId: vpc-0816513d233f79039   #事前に作成したVPCを使用
-      GroupName: rds-sg
+      VpcId: { "Fn::ImportValue": !Sub "CloudFormation-vpc" }   #事前に作成したVPCを指定
+      GroupName: !Sub "${PJPrefix}-${DBInstanceName}-sg"
       GroupDescription: "-"
       Tags:
         - Key: "Name"
-          Value: "rds-sg"
+          Value: !Sub "${PJPrefix}-${DBInstanceName}-sg"
 # インバウントルール
 # Mysql/Auroraの接続を許可
       SecurityGroupIngress:
@@ -192,11 +192,11 @@ Resources:
   DBSubnetGroup: 
     Type: "AWS::RDS::DBSubnetGroup"
     Properties: 
-      DBSubnetGroupName: "cloudformation-rds"
+      DBSubnetGroupName: !Sub "${PJPrefix}-${DBInstanceName}-subnet"
       DBSubnetGroupDescription: "-"
       SubnetIds: 
-        - subnet-0c2d15f15d91024fb    #1aのプライベートサブネット
-        - subnet-0b6157ffe3cd17f55    #1cのプライベートサブネット
+        - { "Fn::ImportValue": !Sub "CloudFormation-private-subnet-a" }    #1aのプライベートサブネット
+        - { "Fn::ImportValue": !Sub "CloudFormation-private-subnet-c" }    #1cのプライベートサブネット
 
 # ------------------------------------------------------------#
 # Output Parameters
