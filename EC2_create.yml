@@ -20,7 +20,10 @@ Metadata:
           - VolumeType
           - VolumeSize
           - KeyName
-          - Location
+          - SSHLocation
+          - HTTPLocation
+          - HTTPSLocation
+          - MysqlLocation 
 
 
     ParameterLabels:
@@ -38,8 +41,14 @@ Metadata:
         default: "VolumeSize"
       KeyName:
         default: "KeyName"
-      Location:
-        default: "Location"
+      SSHLocation:
+        default: "SSHLocation"
+      HTTPLocation:
+        default: "HTTPLocation"
+      HTTPSLocation:
+        default: "HTTPSLocation"
+      MysqlLocation:
+        default: "MysqlLocation"
 
 # ------------------------------------------------------------#
 # Input Parameters
@@ -89,8 +98,8 @@ Parameters:
     Type: AWS::EC2::KeyPair::KeyName
     ConstraintDescription : Can contain only ASCII characters.
 
-# セキュリティグループのIPアドレスの範囲を指定する。
-  Location:
+# SSH接続のセキュリティグループのIPアドレスの範囲を指定する。
+  SSHLocation:
       Description: IP address range that can be used to SSH to the EC2 instances
       Type: String
       MinLength: '9'
@@ -98,6 +107,37 @@ Parameters:
       Default: 0.0.0.0/0
       AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
       ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
+# HTTP接続のセキュリティグループのIPアドレスの範囲を指定する。
+  HTTPLocation:
+      Description: IP address range that can be used to SSH to the EC2 instances
+      Type: String
+      MinLength: '9'
+      MaxLength: '18'
+      Default: 0.0.0.0/0
+      AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+      ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
+# HTTPSセキュリティグループのIPアドレスの範囲を指定する。
+  HTTPSLocation:
+      Description: IP address range that can be used to SSH to the EC2 instances
+      Type: String
+      MinLength: '9'
+      MaxLength: '18'
+      Default: 0.0.0.0/0
+      AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+      ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
+# MysqlのセキュリティグループのIPアドレスの範囲を指定する。
+  MysqlLocation:
+      Description: IP address range that can be used to SSH to the EC2 instances
+      Type: String
+      MinLength: '9'
+      MaxLength: '18'
+      Default: 0.0.0.0/0
+      AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})
+      ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
 
 Resources:
 # ------------------------------------------------------------#
@@ -152,19 +192,19 @@ Resources:
         - IpProtocol: tcp
           FromPort: 3306
           ToPort: 3306
-          CidrIp: !Ref Location
+          CidrIp: !Ref MysqlLocation
 # SSH接続を許可
         - IpProtocol: tcp
           FromPort: 22
           ToPort: 22
-          CidrIp: !Ref Location
+          CidrIp: !Ref SSHLocation
 # HTTP通信の接続を許可
         - IpProtocol: tcp
           FromPort: 80
           ToPort: 80
-          CidrIp: !Ref Location
+          CidrIp: !Ref HTTPLocation
 # HTTPS通信の接続を許可
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          CidrIp: !Ref Location
+          CidrIp: !Ref HTTPSLocation
