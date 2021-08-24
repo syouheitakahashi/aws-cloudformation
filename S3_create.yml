@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description:
+  Cloudformation S3-bucket
+
+#各種メタデータ一覧
+Metadata:
+  "AWS::CloudFormation::Interface":
+    ParameterGroups:
+      - Label:
+          default: "Project Name Prefix"
+        Parameters:
+          - PJPrefix
+      - Label:
+          default: "S3 Configuration"
+        Parameters:
+          - TransitionInDays
+          - NoncurrentVersionExpirationInDays
+    
+    ParameterLabels:
+      TransitionInDays:
+        default: "TransitionInDays"
+      NoncurrentVersionExpirationInDays:
+        default: "NoncurrentVersionExpirationInDays"
+
+# ------------------------------------------------------------#
+# Input Parameters
+# ------------------------------------------------------------# 
+Parameters:
+
+# PJPrefixを3文字以上63文字以内に設定し、デフォルト値をs3bucketとする
+  PJPrefix:
+    Type: String
+    Default: "s3bucket"
+    MinLength: 3
+    MaxLength: 63
+    AllowedPattern: "[a-z][a-z0-9]*"
+    ConstraintDescription: "must begin with a letter and contain only alphanumeric characters." 
+
+# バージョニングされているデータをデフォルトで30日後にS3 Glacierへ移行。
+  TransitionInDays: 
+    Type: String
+    Default: 30
+
+# バージョニングされているデータをデフォルトで365日後に削除。
+  NoncurrentVersionExpirationInDays:
+    Type: String
+    Default: 365
+
+Resources: 
+# ------------------------------------------------------------#
+#  S3 Bucket
+# ------------------------------------------------------------#
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties: 
+      BucketName: !Ref PJPrefix
+      VersioningConfiguration: 
+        Status: Enabled
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+      LifecycleConfiguration:
+        Rules:
+          - Id  : !Ref PJPrefix
+            Status: Enabled
+            Prefix: log/
+            NoncurrentVersionTransition:
+              StorageClass: GLACIER
+              TransitionInDays: !Ref TransitionInDays
+            NoncurrentVersionExpirationInDays: !Ref NoncurrentVersionExpirationInDays
+            
+# 作成したS3バケットに対して読み取り専用を許可
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref S3Bucket
+      PolicyDocument:
+        Statement:
+          - Action:
+              - s3:GetObject
+            Effect: "Allow"
+            Principal: "*"
+            Resource: !Sub arn:aws:s3:::${S3Bucket}/*
