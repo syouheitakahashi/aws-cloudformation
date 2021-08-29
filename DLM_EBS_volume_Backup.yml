@@ -1,0 +1,53 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description:
+  Every other day EBS volume Backup
+
+Parameters:
+# ------------------------------------------------------------#
+# Input Parameters
+# ------------------------------------------------------------# 
+# ターゲットリソースタグを指定
+  EBSNameTag:
+    Type: String
+
+Resources:
+# ------------------------------------------------------------# 
+# LifecyclePolicy Create
+# ------------------------------------------------------------# 
+  LifecyclePolicy:
+    Type: AWS::DLM::LifecyclePolicy
+    Properties: 
+      Description: "EBS-Snapshot Buckup Cross-Region"
+      ExecutionRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/AWSDataLifecycleManagerDefaultRole"
+      PolicyDetails: 
+        ResourceTypes: 
+          - "VOLUME"
+        Schedules:
+          -
+            Name: !Sub "${EBSNameTag}-daily-snapshot"
+            CreateRule: 
+              Interval: 24
+              IntervalUnit: HOURS
+              Times: 
+                - "15:00"
+            RetainRule: 
+              Interval: 30
+              IntervalUnit: DAYS
+              
+            CrossRegionCopyRules: 
+              -
+                Encrypted: false
+                RetainRule: 
+                  Interval: 30
+                  IntervalUnit: DAYS
+                Target: us-east-1
+
+        TargetTags: 
+          -
+            Key: "Name"
+            Value: !Ref EBSNameTag
+      State: "ENABLED"
+      Tags: 
+        - 
+          Key: Name
+          Value: !Sub "${EBSNameTag}-daily-snapshot"
